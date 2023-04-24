@@ -44,7 +44,15 @@ func (h *callbackHandler) OnIncomingMessage(ctx context.Context, msg *message.Rx
 		// 判断是否需要重启会话
 		content := msg.Text.Content
 		closeSession := h.cfg.Conversation.CloseSessionFlag == content
-
+                fengk := strings.ContainsAny(content, "绝密") || strings.Contains(content, "机密")
+                reply = "警告：你已触发风控，触发原因：绝密或机密"
+                if fengk {
+                        if err := h.sendTextMessage(context.Background(), msg.AgentId, msg.FromUserName, reply); err != nil {
+                                log.Error().Err(err).Msgf("Send Wecom Response error: %v", err)
+                                return err
+                        }
+                        return nil
+                }
 		// 获取回复
 		if !closeSession {
 			var handler func(ctx context.Context, agentId int64, userId string, content string) (string, error)
